@@ -1,0 +1,26 @@
+# Logs
+logs/*.log
+logs/*.html
+!logs/.gitkeep
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# PowerShell
+*.psm1.bak
+
+# Downloaded tools (user should download their own)
+tools/*
+!tools/.gitkeep

@@ -1,0 +1,129 @@
+{
+    "version": "1.0.0",
+    "description": "WinHealthImprover Default Configuration",
+
+    "general": {
+        "logDirectory": ".\\logs",
+        "dryRun": false,
+        "headless": false
+    },
+
+    "stages": {
+        "skipStages": [],
+        "onlyStages": []
+    },
+
+    "stage0_prep": {
+        "createRestorePoint": true,
+        "killInterferingProcesses": true,
+        "syncClock": true,
+        "disableSleep": true
+    },
+
+    "stage1_tempClean": {
+        "cleanUserTemp": true,
+        "cleanWindowsTemp": true,
+        "cleanWindowsUpdateCache": true,
+        "cleanBrowserCaches": true,
+        "emptyRecycleBin": true,
+        "cleanThumbnailCache": true,
+        "cleanErrorReports": true,
+        "cleanDeliveryOptimization": true,
+        "cleanMemoryDumps": true,
+        "clearEventLogs": true,
+        "cleanPrefetch": true,
+        "rebuildFontCache": true
+    },
+
+    "stage2_debloat": {
+        "removeUWPBloatware": true,
+        "removeOEMBloatware": true,
+        "removeOneDrive": true,
+        "disableCortana": true,
+        "disableSuggestedContent": true,
+        "disableConsumerFeatures": true,
+        "aggressiveDebloat": false
+    },
+
+    "stage3_disinfect": {
+        "quickScan": false,
+        "updateDefender": true,
+        "checkMaliciousProcesses": true,
+        "auditScheduledTasks": true,
+        "checkHostsFile": true,
+        "auditStartupItems": true
+    },
+
+    "stage4_repair": {
+        "runDISM": true,
+        "runSFC": true,
+        "resetWindowsUpdate": true,
+        "repairWMI": true,
+        "repairNetworkStack": true,
+        "repairWindowsSearch": true,
+        "repairFileAssociations": true,
+        "repairPrintSpooler": true,
+        "repairFirewall": true,
+        "runChkdsk": false
+    },
+
+    "stage5_patch": {
+        "installWindowsUpdates": true,
+        "updateStoreApps": true,
+        "checkDriverUpdates": true,
+        "skipWindowsUpdates": false
+    },
+
+    "stage6_optimize": {
+        "optimizationLevel": "Performance",
+        "optimizeDisks": true,
+        "optimizePowerPlan": true,
+        "optimizeVisualEffects": true,
+        "optimizeServices": true,
+        "optimizePageFile": true,
+        "disableBackgroundApps": true,
+        "optimizeNTFS": true
+    },
+
+    "stage7_privacy": {
+        "privacyLevel": "Moderate",
+        "disableTelemetry": true,
+        "disableAdvertisingId": true,
+        "disableActivityHistory": true,
+        "disableLocationTracking": true,
+        "tightenAppPermissions": true,
+        "disableTelemetryTasks": true,
+        "disableTelemetryServices": true,
+        "hardenEdgePrivacy": true
+    },
+
+    "stage8_network": {
+        "dnsProvider": "Cloudflare",
+        "optimizeTCPIP": true,
+        "optimizeAdapters": true,
+        "disableSMBv1": true,
+        "disableNetBIOS": true,
+        "optimizeDNSCache": true,
+        "optimizeThrottling": true
+    },
+
+    "stage9_security": {
+        "securityLevel": "Standard",
+        "hardenDefender": true,
+        "configureUAC": true,
+        "enableASRRules": true,
+        "enablePowerShellLogging": true,
+        "disableAutoPlay": true,
+        "hardenRDP": true,
+        "disableGuestAccount": true,
+        "removeDangerousFeatures": true,
+        "enableCredentialProtection": true,
+        "hardenOfficeMacros": true
+    },
+
+    "stage10_wrapup": {
+        "generateHTMLReport": true,
+        "createFinalRestorePoint": true,
+        "restorePowerSettings": true
+    }
+}
