@@ -22,6 +22,12 @@ A modern, comprehensive PowerShell-based system repair and optimization tool for
 | Structured Logging | Basic | Multi-level structured logging with metrics |
 | Configuration | None | JSON configuration file |
 | Modular Architecture | Monolithic | Importable PowerShell modules |
+| Undo/Rollback | None | Full SafetyNet undo system |
+| Interactive Wizard | None | Guided step-by-step wizard |
+| Quick-Fix Presets | None | One-click Fix My PC, Speed Up, Privacy Lock, etc. |
+| System Analyzer | None | Smart scan with prioritized recommendations |
+| App Whitelist | None | Protect specific apps from removal |
+| Confirmation Prompts | None | Ask before removing each app (non-auto mode) |
 
 ## Stages
 
@@ -41,7 +47,22 @@ A modern, comprehensive PowerShell-based system repair and optimization tool for
 
 ## Quick Start
 
-### CLI (Recommended)
+### Easy Mode (Recommended for Beginners)
+
+```powershell
+# Double-click Launch.bat for a menu, or:
+
+# Interactive Wizard - guided step-by-step, no knowledge needed
+.\WinHealthImprover.ps1 -Wizard
+
+# Quick-Fix Presets - one-click solutions
+.\WinHealthImprover.ps1 -QuickFix
+
+# System Analyzer - scan first, then recommend what to run
+.\WinHealthImprover.ps1 -Analyze
+```
+
+### CLI (Power Users)
 
 ```powershell
 # Run as Administrator
@@ -67,8 +88,24 @@ A modern, comprehensive PowerShell-based system repair and optimization tool for
 ### GUI
 
 ```powershell
-# Launch the graphical interface
+# Launch the graphical interface (includes Quick-Fix preset buttons)
 .\WinHealthImprover-GUI.ps1
+```
+
+### Undo Changes
+
+```powershell
+# Reverse ALL changes from the most recent run
+.\Undo-Changes.ps1
+
+# Preview what would be undone
+.\Undo-Changes.ps1 -WhatIf
+
+# Only undo changes from a specific stage
+.\Undo-Changes.ps1 -Stage 7
+
+# Undo from a specific journal file
+.\Undo-Changes.ps1 -JournalFile ".\logs\SafetyNet_20240101_120000.json"
 ```
 
 ## Parameters
@@ -89,6 +126,15 @@ A modern, comprehensive PowerShell-based system repair and optimization tool for
 | `-SkipChkdsk` | switch | off | Skip disk health check |
 | `-NoRestore` | switch | off | Skip creating restore points |
 | `-LogDirectory` | path | `.\logs` | Custom log directory |
+| `-Auto` | switch | off | Automatic mode - no confirmation prompts |
+| `-Wizard` | switch | off | Launch interactive wizard (guided mode) |
+| `-QuickFix` | switch | off | Launch Quick-Fix preset menu |
+| `-Analyze` | switch | off | Run system analyzer with recommendations |
+| `-Resume` | switch | off | Resume from a previous interrupted run |
+| `-ConfigDump` | switch | off | Show configuration and exit |
+| `-SelfDestruct` | switch | off | Delete WinHealthImprover files after run |
+| `-AutoReboot` | int | 0 | Auto-reboot after N seconds (0 = disabled) |
+| `-AutoShutdown` | switch | off | Auto-shutdown after completion |
 
 ## Requirements
 
@@ -103,14 +149,20 @@ A modern, comprehensive PowerShell-based system repair and optimization tool for
 WinHealthImprover/
 ├── WinHealthImprover.ps1          # Main CLI launcher
 ├── WinHealthImprover-GUI.ps1      # GUI launcher (WPF)
+├── Launch.bat                     # Easy double-click menu launcher
+├── Undo-Changes.ps1               # Standalone rollback script
 ├── config/
 │   └── defaults.json              # Default configuration
 ├── modules/
 │   ├── Core/
+│   │   ├── Analyzer.psm1         # System analyzer & recommendations
 │   │   ├── Initialize.psm1       # Pre-flight checks & health scoring
 │   │   ├── Logging.psm1          # Structured logging framework
+│   │   ├── QuickFix.psm1         # Quick-Fix preset configurations
 │   │   ├── Reporting.psm1        # HTML report generation
-│   │   └── Utils.psm1            # Common utility functions
+│   │   ├── SafetyNet.psm1        # Change tracking & undo system
+│   │   ├── Utils.psm1            # Common utility functions
+│   │   └── Wizard.psm1           # Interactive wizard for beginners
 │   ├── Stage0-Prep.psm1          # System preparation
 │   ├── Stage1-TempClean.psm1     # Temp file cleanup
 │   ├── Stage2-Debloat.psm1       # Bloatware removal
@@ -139,12 +191,29 @@ After each run, WinHealthImprover generates:
 
 ## Safety Features
 
-- **System Restore Points** are created before and after modifications
-- **Dry Run mode** lets you preview every change before committing
-- **Structured logging** records every action taken
-- **Non-destructive defaults** - aggressive options must be explicitly enabled
-- **Error isolation** - stage failures don't stop the entire process
-- **Smart detection** - auto-detects SSD/HDD, RAM amount, and adjusts behavior
+- **SafetyNet Undo System** - Every change (registry, services, files) is tracked in a journal and fully reversible with `.\Undo-Changes.ps1`
+- **System Restore Points** - Created before and after modifications
+- **Dry Run mode** - Preview every change before committing
+- **Pre-flight Safety Checks** - Validates disk space, battery, running installers before starting
+- **App Whitelist** - Protect specific apps from being removed during debloat
+- **Confirmation Prompts** - Asks before each app removal (unless `-Auto` mode)
+- **Per-Stage Rollback** - Undo changes from a specific stage only (`.\Undo-Changes.ps1 -Stage 7`)
+- **Checkpoint/Resume** - If the process crashes, resume from where it left off with `-Resume`
+- **Structured Logging** - Every action recorded with timestamps and before/after values
+- **Error Isolation** - Stage failures don't stop the entire process
+- **Smart Detection** - Auto-detects SSD/HDD, RAM, battery, and adjusts behavior
+
+## Quick-Fix Presets
+
+| Preset | Description | Stages | Est. Time | Risk |
+|--------|-------------|--------|-----------|------|
+| Fix My PC | Repair a slow/broken PC | 0,1,3,4,5,6 | ~30 min | Low |
+| Speed Up | Maximum performance | 0,1,2,6,8 | ~15 min | Low |
+| Privacy Lock | Stop tracking/spying | 0,7 | ~5 min | Low |
+| Clean Sweep | Deep junk removal | 0,1,2 | ~10 min | Moderate |
+| Security Max | Full hardening | 0,3,8,9 | ~15 min | Low |
+| Fresh Start | The full treatment | 0-9 | ~60 min | Moderate |
+| Maintenance | Monthly routine | 0,1,3,5,6 | ~20 min | Very Low |
 
 ## Extending
 

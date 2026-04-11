@@ -190,23 +190,23 @@ function Optimize-VisualEffects {
 
         if ($Level -eq "MaxPerformance") {
             # Disable all visual effects
-            Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Value 2
-            Set-RegistryValue -Path "HKCU:\Control Panel\Desktop" -Name "UserPreferencesMask" -Value ([byte[]](0x90, 0x12, 0x03, 0x80, 0x10, 0x00, 0x00, 0x00)) -Type "Binary"
+            Set-RegistryValueSafe -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Value 2 -Stage "Stage6" -Reason "Disable visual effects (max performance)"
+            Set-RegistryValueSafe -Path "HKCU:\Control Panel\Desktop" -Name "UserPreferencesMask" -Value ([byte[]](0x90, 0x12, 0x03, 0x80, 0x10, 0x00, 0x00, 0x00)) -Type "Binary" -Stage "Stage6" -Reason "Disable visual effects mask"
         }
         else {
             # Custom: Keep smooth fonts and taskbar thumbnails, disable the rest
-            Set-RegistryValue -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Value 3
+            Set-RegistryValueSafe -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -Value 3 -Stage "Stage6" -Reason "Custom visual effects"
 
             # Disable animations
-            Set-RegistryValue -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Value "0" -Type "String"
-            Set-RegistryValue -Path "HKCU:\Control Panel\Desktop" -Name "DragFullWindows" -Value "1" -Type "String"
+            Set-RegistryValueSafe -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Value "0" -Type "String" -Stage "Stage6" -Reason "Disable window animations"
+            Set-RegistryValueSafe -Path "HKCU:\Control Panel\Desktop" -Name "DragFullWindows" -Value "1" -Type "String" -Stage "Stage6" -Reason "Enable full window drag"
 
             # Disable transparency
-            Set-RegistryValue -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "EnableTransparency" -Value 0
+            Set-RegistryValueSafe -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "EnableTransparency" -Value 0 -Stage "Stage6" -Reason "Disable transparency"
         }
 
         # Disable menu animation
-        Set-RegistryValue -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value "0" -Type "String"
+        Set-RegistryValueSafe -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value "0" -Type "String" -Stage "Stage6" -Reason "Disable menu animation delay"
 
         Write-Log -Message "Visual effects optimized for $Level" -Level "SUCCESS" -Component "Stage6"
         return $true
@@ -306,7 +306,13 @@ function Optimize-Services {
             continue
         }
 
-        if (Set-ServiceStartupType -ServiceName $svc.Name -StartupType "Disabled") {
+        if (Get-Command Set-ServiceStartupTypeSafe -ErrorAction SilentlyContinue) {
+            if (Set-ServiceStartupTypeSafe -ServiceName $svc.Name -StartupType "Disabled" -Stage "Stage6" -Reason "Disable $($svc.Desc)") {
+                Write-Log -Message "Disabled: $($svc.Name) ($($svc.Desc))" -Level "SUCCESS" -Component "Stage6"
+                $modified++
+            }
+        }
+        elseif (Set-ServiceStartupType -ServiceName $svc.Name -StartupType "Disabled") {
             Write-Log -Message "Disabled: $($svc.Name) ($($svc.Desc))" -Level "SUCCESS" -Component "Stage6"
             $modified++
         }
@@ -366,8 +372,8 @@ function Disable-BackgroundApps {
 
     try {
         # Disable background apps globally
-        Set-RegistryValue -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" -Name "GlobalUserDisabled" -Value 1
-        Set-RegistryValue -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "BackgroundAppGlobalToggle" -Value 0
+        Set-RegistryValueSafe -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" -Name "GlobalUserDisabled" -Value 1 -Stage "Stage6" -Reason "Disable background apps"
+        Set-RegistryValueSafe -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "BackgroundAppGlobalToggle" -Value 0 -Stage "Stage6" -Reason "Disable background app search toggle"
 
         Write-Log -Message "Background apps disabled" -Level "SUCCESS" -Component "Stage6"
         return $true
@@ -386,7 +392,11 @@ function Optimize-SysMain {
 
     if ($isSSD) {
         if (-not $DryRun) {
-            Set-ServiceStartupType -ServiceName "SysMain" -StartupType "Disabled" | Out-Null
+            if (Get-Command Set-ServiceStartupTypeSafe -ErrorAction SilentlyContinue) {
+                Set-ServiceStartupTypeSafe -ServiceName "SysMain" -StartupType "Disabled" -Stage "Stage6" -Reason "SysMain not needed on SSD" | Out-Null
+            } else {
+                Set-ServiceStartupType -ServiceName "SysMain" -StartupType "Disabled" | Out-Null
+            }
             Write-Log -Message "SysMain disabled (not needed on SSD)" -Level "SUCCESS" -Component "Stage6"
         }
         else {
@@ -427,12 +437,12 @@ function Set-GameMode {
     }
 
     # Enable Game Mode (actually helps with non-gaming too by reducing background interruptions)
-    Set-RegistryValue -Path "HKCU:\SOFTWARE\Microsoft\GameBar" -Name "AllowAutoGameMode" -Value 1
-    Set-RegistryValue -Path "HKCU:\SOFTWARE\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Value 1
+    Set-RegistryValueSafe -Path "HKCU:\SOFTWARE\Microsoft\GameBar" -Name "AllowAutoGameMode" -Value 1 -Stage "Stage6" -Reason "Enable Game Mode"
+    Set-RegistryValueSafe -Path "HKCU:\SOFTWARE\Microsoft\GameBar" -Name "AutoGameModeEnabled" -Value 1 -Stage "Stage6" -Reason "Enable Auto Game Mode"
 
     # Disable Game DVR (reduces CPU overhead)
-    Set-RegistryValue -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Value 0
-    Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Value 0
+    Set-RegistryValueSafe -Path "HKCU:\System\GameConfigStore" -Name "GameDVR_Enabled" -Value 0 -Stage "Stage6" -Reason "Disable Game DVR"
+    Set-RegistryValueSafe -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR" -Name "AllowGameDVR" -Value 0 -Stage "Stage6" -Reason "Disable Game DVR policy"
 
     Write-Log -Message "Game Mode configured (DVR disabled for performance)" -Level "SUCCESS" -Component "Stage6"
 }

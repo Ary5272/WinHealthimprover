@@ -178,7 +178,7 @@ function Set-UACLevel {
     )
 
     foreach ($setting in $settings) {
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) { $count++ }
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage9" -Reason "Configure UAC") { $count++ }
     }
 
     Write-Log -Message "UAC configured to recommended level" -Level "SUCCESS" -Component "Stage9"
@@ -255,7 +255,7 @@ function Enable-PowerShellLogging {
     )
 
     foreach ($setting in $settings) {
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) { $count++ }
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage9" -Reason "Enable PowerShell logging") { $count++ }
     }
 
     Write-Log -Message "PowerShell security logging enabled" -Level "SUCCESS" -Component "Stage9"
@@ -280,7 +280,7 @@ function Disable-AutoPlayAutoRun {
     )
 
     foreach ($setting in $settings) {
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) { $count++ }
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage9" -Reason "Disable AutoPlay/AutoRun") { $count++ }
     }
 
     Write-Log -Message "AutoPlay/AutoRun disabled" -Level "SUCCESS" -Component "Stage9"
@@ -309,7 +309,7 @@ function Harden-RDP {
     )
 
     foreach ($setting in $settings) {
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) { $count++ }
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage9" -Reason "Harden RDP") { $count++ }
     }
 
     Write-Log -Message "RDP security hardened ($count settings)" -Level "SUCCESS" -Component "Stage9"
@@ -385,19 +385,19 @@ function Enable-CredentialProtection {
     $count = 0
 
     # Disable WDigest (prevents cleartext password storage)
-    if (Set-RegistryValue -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest" -Name "UseLogonCredential" -Value 0) {
+    if (Set-RegistryValueSafe -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest" -Name "UseLogonCredential" -Value 0 -Stage "Stage9" -Reason "Disable WDigest cleartext caching") {
         Write-Log -Message "WDigest cleartext credential caching disabled" -Level "SUCCESS" -Component "Stage9"
         $count++
     }
 
     # Enable LSA protection
-    if (Set-RegistryValue -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPL" -Value 1) {
+    if (Set-RegistryValueSafe -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPL" -Value 1 -Stage "Stage9" -Reason "Enable LSA protection") {
         Write-Log -Message "LSA protection enabled" -Level "SUCCESS" -Component "Stage9"
         $count++
     }
 
     # Disable LLMNR (Link-Local Multicast Name Resolution)
-    if (Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" -Name "EnableMulticast" -Value 0) {
+    if (Set-RegistryValueSafe -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" -Name "EnableMulticast" -Value 0 -Stage "Stage9" -Reason "Disable LLMNR") {
         Write-Log -Message "LLMNR disabled" -Level "SUCCESS" -Component "Stage9"
         $count++
     }
@@ -454,7 +454,7 @@ function Harden-OfficeMacros {
     foreach ($version in $officeVersions) {
         foreach ($app in $officeApps) {
             $path = "HKCU:\SOFTWARE\Policies\Microsoft\Office\$version\$app\Security"
-            if (Set-RegistryValue -Path $path -Name "blockcontentexecutionfrominternet" -Value 1) {
+            if (Set-RegistryValueSafe -Path $path -Name "blockcontentexecutionfrominternet" -Value 1 -Stage "Stage9" -Reason "Block Office macros from internet") {
                 $count++
             }
         }

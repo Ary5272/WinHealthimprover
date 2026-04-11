@@ -19,7 +19,8 @@ function Invoke-Stage2 {
         [hashtable]$Config = @{},
         [switch]$DryRun,
         [switch]$KeepOneDrive,
-        [switch]$AggressiveDebloat
+        [switch]$AggressiveDebloat,
+        [switch]$Auto
     )
 
     $stageTimer = [System.Diagnostics.Stopwatch]::StartNew()
@@ -29,12 +30,12 @@ function Invoke-Stage2 {
 
     # ---- Remove UWP Bloatware ----
     Write-SubStageHeader "Removing UWP Bloatware"
-    $removed = Remove-UWPBloatware -DryRun:$DryRun -Aggressive:$AggressiveDebloat
+    $removed = Remove-UWPBloatware -DryRun:$DryRun -Aggressive:$AggressiveDebloat -Auto:$Auto
     $removedCount += $removed
 
     # ---- Remove OEM Bloatware ----
     Write-SubStageHeader "Removing OEM Bloatware"
-    $removed = Remove-OEMBloatware -DryRun:$DryRun
+    $removed = Remove-OEMBloatware -DryRun:$DryRun -Auto:$Auto
     $removedCount += $removed
 
     # ---- OneDrive ----
@@ -84,7 +85,8 @@ function Remove-UWPBloatware {
     [CmdletBinding()]
     param(
         [switch]$DryRun,
-        [switch]$Aggressive
+        [switch]$Aggressive,
+        [switch]$Auto
     )
 
     # Conservative list - safe to remove for most users
@@ -184,6 +186,14 @@ function Remove-UWPBloatware {
 
     $removed = 0
     foreach ($app in $bloatwareApps) {
+        # Check whitelist - never remove whitelisted apps
+        if (Get-Command Test-AppWhitelisted -ErrorAction SilentlyContinue) {
+            if (Test-AppWhitelisted -AppName $app) {
+                Write-Log -Message "Skipped (whitelisted): $app" -Level "INFO" -Component "Stage2"
+                continue
+            }
+        }
+
         $installed = Get-AppxPackage -Name $app -AllUsers -ErrorAction SilentlyContinue
         if ($installed) {
             if ($DryRun) {
@@ -191,7 +201,20 @@ function Remove-UWPBloatware {
                 $removed++
             }
             else {
+                # Confirmation prompt for non-auto mode
+                if (-not $Auto) {
+                    $shortName = ($app -split '\.')[-1]
+                    Write-Host "    Remove '$shortName'? " -NoNewline -ForegroundColor Yellow
+                    $confirm = Read-Host "(Y/n/all)"
+                    if ($confirm -match "^[Aa]") { $Auto = $true }
+                    elseif ($confirm -match "^[Nn]") { continue }
+                }
+
                 try {
+                    # Record in journal
+                    if (Get-Command Add-JournalEntry -ErrorAction SilentlyContinue) {
+                        Add-JournalEntry -Type "AppRemoval" -Description "Removed UWP app: $app" -Target $app -Stage "Stage2"
+                    }
                     # Remove for all users
                     Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -AllUsers -ErrorAction Stop
                     # Prevent reinstallation
@@ -217,7 +240,10 @@ function Remove-UWPBloatware {
 
 function Remove-OEMBloatware {
     [CmdletBinding()]
-    param([switch]$DryRun)
+    param(
+        [switch]$DryRun,
+        [switch]$Auto
+    )
 
     $oemBloatware = @(
         # Dell
@@ -307,11 +333,11 @@ function Remove-OneDriveConsumer {
         }
 
         # Remove from Explorer sidebar
-        Set-RegistryValue -Path "HKCR:\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" -Name "System.IsPinnedToNameSpaceTree" -Value 0
-        Set-RegistryValue -Path "HKCR:\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" -Name "System.IsPinnedToNameSpaceTree" -Value 0
+        Set-RegistryValueSafe -Path "HKCR:\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" -Name "System.IsPinnedToNameSpaceTree" -Value 0 -Stage "Stage2" -Reason "Remove OneDrive from Explorer sidebar"
+        Set-RegistryValueSafe -Path "HKCR:\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" -Name "System.IsPinnedToNameSpaceTree" -Value 0 -Stage "Stage2" -Reason "Remove OneDrive from Explorer sidebar (32-bit)"
 
         # Prevent reinstall
-        Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive" -Name "DisableFileSyncNGSC" -Value 1
+        Set-RegistryValueSafe -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive" -Name "DisableFileSyncNGSC" -Value 1 -Stage "Stage2" -Reason "Prevent OneDrive reinstallation"
 
         Write-Log -Message "OneDrive removed successfully" -Level "SUCCESS" -Component "Stage2"
     }
@@ -342,7 +368,7 @@ function Disable-Cortana {
     )
 
     foreach ($setting in $settings) {
-        Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value | Out-Null
+        Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage2" -Reason "Disable Cortana" | Out-Null
     }
 
     Write-Log -Message "Cortana disabled" -Level "SUCCESS" -Component "Stage2"
@@ -375,7 +401,7 @@ function Disable-SuggestedContent {
     )
 
     foreach ($setting in $settings) {
-        Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value | Out-Null
+        Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage2" -Reason "Disable suggested content" | Out-Null
     }
 
     Write-Log -Message "Suggested content and tips disabled" -Level "SUCCESS" -Component "Stage2"
@@ -391,12 +417,12 @@ function Disable-ConsumerFeatures {
     }
 
     # Disable consumer features (prevents automatic app installs)
-    Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableWindowsConsumerFeatures" -Value 1
-    Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableSoftLanding" -Value 1
-    Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableCloudOptimizedContent" -Value 1
+    Set-RegistryValueSafe -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableWindowsConsumerFeatures" -Value 1 -Stage "Stage2" -Reason "Disable consumer features"
+    Set-RegistryValueSafe -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableSoftLanding" -Value 1 -Stage "Stage2" -Reason "Disable soft landing"
+    Set-RegistryValueSafe -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableCloudOptimizedContent" -Value 1 -Stage "Stage2" -Reason "Disable cloud content"
 
     # Disable app suggestions
-    Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableTailoredExperiencesWithDiagnosticData" -Value 1
+    Set-RegistryValueSafe -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableTailoredExperiencesWithDiagnosticData" -Value 1 -Stage "Stage2" -Reason "Disable tailored experiences"
 
     Write-Log -Message "Consumer features disabled" -Level "SUCCESS" -Component "Stage2"
 }
@@ -412,9 +438,9 @@ function Clear-StartMenuTiles {
 
     try {
         # Remove promoted tiles / ads in Start
-        Set-RegistryValue -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338388Enabled" -Value 0
-        Set-RegistryValue -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Explorer" -Name "DisableNotificationCenter" -Value 0
-        Set-RegistryValue -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "Start_TrackDocs" -Value 0
+        Set-RegistryValueSafe -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338388Enabled" -Value 0 -Stage "Stage2" -Reason "Disable Start Menu promoted tiles"
+        Set-RegistryValueSafe -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Explorer" -Name "DisableNotificationCenter" -Value 0 -Stage "Stage2" -Reason "Clean Start Menu"
+        Set-RegistryValueSafe -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "Start_TrackDocs" -Value 0 -Stage "Stage2" -Reason "Disable recent document tracking"
 
         Write-Log -Message "Start Menu tiles cleaned" -Level "SUCCESS" -Component "Stage2"
     }

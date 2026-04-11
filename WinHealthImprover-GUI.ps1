@@ -72,11 +72,28 @@ Add-Type -AssemblyName System.Windows.Forms
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,15">
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
             <TextBlock Text="WinHealthImprover" FontSize="28" FontWeight="Bold"
                        Foreground="#00d4ff" HorizontalAlignment="Center"/>
             <TextBlock Text="Windows System Repair, Optimization &amp; Hardening Toolkit"
                        FontSize="12" Foreground="#7f8c9b" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+            <TextBlock Text="All changes are tracked and reversible via SafetyNet"
+                       FontSize="11" Foreground="#00cc66" HorizontalAlignment="Center" Margin="0,3,0,5"/>
+            <!-- Quick-Fix Preset Buttons -->
+            <WrapPanel HorizontalAlignment="Center" Margin="0,5,0,0">
+                <Button x:Name="btnFixMyPC" Content=" Fix My PC " Margin="4,2" FontSize="11" Padding="12,6"
+                        Background="#1a4a2a" Foreground="#00ff88" BorderBrush="#2a6a4a"/>
+                <Button x:Name="btnSpeedUp" Content=" Speed Up " Margin="4,2" FontSize="11" Padding="12,6"
+                        Background="#1a3a5c" Foreground="#00d4ff" BorderBrush="#2a5a8c"/>
+                <Button x:Name="btnCleanUp" Content=" Clean Up " Margin="4,2" FontSize="11" Padding="12,6"
+                        Background="#3a3a1a" Foreground="#ffcc00" BorderBrush="#5a5a2a"/>
+                <Button x:Name="btnPrivacy" Content=" Privacy Lock " Margin="4,2" FontSize="11" Padding="12,6"
+                        Background="#3a1a3a" Foreground="#ff88ff" BorderBrush="#5a2a5a"/>
+                <Button x:Name="btnSecurity" Content=" Security Max " Margin="4,2" FontSize="11" Padding="12,6"
+                        Background="#3a1a1a" Foreground="#ff6666" BorderBrush="#5a2a2a"/>
+                <Button x:Name="btnUndo" Content=" Undo Changes " Margin="4,2" FontSize="11" Padding="12,6"
+                        Background="#2a1a1a" Foreground="#ff4444" BorderBrush="#4a2a2a"/>
+            </WrapPanel>
         </StackPanel>
 
         <!-- Main Content Grid -->
@@ -248,6 +265,60 @@ $controls['btnSelectAll'].Add_Click({
 $controls['btnDeselectAll'].Add_Click({
     for ($i = 0; $i -le 9; $i++) {
         $controls["chkStage$i"].IsChecked = $false
+    }
+})
+
+# Quick-Fix Preset Handlers
+function Set-PresetStages {
+    param([int[]]$Stages)
+    for ($i = 0; $i -le 9; $i++) {
+        $controls["chkStage$i"].IsChecked = ($i -in $Stages)
+    }
+}
+
+$controls['btnFixMyPC'].Add_Click({
+    Set-PresetStages -Stages @(0,1,3,4,5,6)
+    $controls['cmbOptimization'].SelectedIndex = 1  # Performance
+    $controls['chkDryRun'].IsChecked = $false
+    Add-OutputText "[Preset] Fix My PC selected: Clean, scan, repair, update, optimize"
+})
+
+$controls['btnSpeedUp'].Add_Click({
+    Set-PresetStages -Stages @(0,1,2,6,8)
+    $controls['cmbOptimization'].SelectedIndex = 2  # MaxPerformance
+    $controls['chkSkipUpdates'].IsChecked = $true
+    $controls['chkDryRun'].IsChecked = $false
+    Add-OutputText "[Preset] Speed Up selected: Clean, debloat, optimize, network"
+})
+
+$controls['btnCleanUp'].Add_Click({
+    Set-PresetStages -Stages @(0,1,2)
+    $controls['chkAggressive'].IsChecked = $true
+    $controls['chkDryRun'].IsChecked = $false
+    Add-OutputText "[Preset] Clean Up selected: Temp files, bloatware, junk removal"
+})
+
+$controls['btnPrivacy'].Add_Click({
+    Set-PresetStages -Stages @(0,7)
+    $controls['cmbPrivacy'].SelectedIndex = 1  # Aggressive
+    $controls['chkDryRun'].IsChecked = $false
+    Add-OutputText "[Preset] Privacy Lock selected: Full telemetry and tracking disable"
+})
+
+$controls['btnSecurity'].Add_Click({
+    Set-PresetStages -Stages @(0,3,8,9)
+    $controls['cmbSecurity'].SelectedIndex = 1  # Enhanced
+    $controls['chkDryRun'].IsChecked = $false
+    Add-OutputText "[Preset] Security Max selected: Scan, network security, full hardening"
+})
+
+$controls['btnUndo'].Add_Click({
+    $undoScript = Join-Path $PSScriptRoot "Undo-Changes.ps1"
+    if (Test-Path $undoScript) {
+        Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$undoScript`"" -Verb RunAs
+    }
+    else {
+        Add-OutputText "ERROR: Undo-Changes.ps1 not found"
     }
 })
 

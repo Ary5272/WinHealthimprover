@@ -189,7 +189,7 @@ function Optimize-TCPIPStack {
         )
 
         foreach ($setting in $tcpSettings) {
-            if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) { $count++ }
+            if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage8" -Reason "TCP/IP optimization") { $count++ }
         }
 
         Write-Log -Message "TCP/IP stack optimized ($count settings)" -Level "SUCCESS" -Component "Stage8"
@@ -252,7 +252,7 @@ function Disable-SMBv1 {
         Disable-WindowsOptionalFeature -Online -FeatureName "SMB1Protocol" -NoRestart -ErrorAction SilentlyContinue | Out-Null
 
         # Registry fallback
-        Set-RegistryValue -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Name "SMB1" -Value 0
+        Set-RegistryValueSafe -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Name "SMB1" -Value 0 -Stage "Stage8" -Reason "Disable SMBv1"
 
         Write-Log -Message "SMBv1 disabled (security improvement)" -Level "SUCCESS" -Component "Stage8"
         return $true
@@ -309,7 +309,7 @@ function Optimize-DNSCache {
         )
 
         foreach ($setting in $settings) {
-            Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value | Out-Null
+            Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage8" -Reason "DNS cache optimization" | Out-Null
         }
 
         Write-Log -Message "DNS cache optimized" -Level "SUCCESS" -Component "Stage8"
@@ -332,10 +332,10 @@ function Optimize-NetworkThrottling {
 
     try {
         # Disable Nagle's algorithm (reduces latency for interactive apps)
-        Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Value 0xFFFFFFFF
+        Set-RegistryValueSafe -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Value 0xFFFFFFFF -Stage "Stage8" -Reason "Disable network throttling"
 
         # Disable system responsiveness throttling for network
-        Set-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Value 0
+        Set-RegistryValueSafe -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Value 0 -Stage "Stage8" -Reason "Optimize system responsiveness"
 
         Write-Log -Message "Network throttling optimized" -Level "SUCCESS" -Component "Stage8"
         return $true
@@ -363,7 +363,7 @@ function Disable-AdapterPowerSaving {
             $deviceId = (Get-NetAdapterHardwareInfo -Name $adapter.Name -ErrorAction SilentlyContinue).PnpDeviceID
             if ($deviceId) {
                 $regPath = "HKLM:\SYSTEM\CurrentControlSet\Enum\$deviceId\Device Parameters\Power"
-                Set-RegistryValue -Path $regPath -Name "AllowIdleIrpInD3" -Value 0 | Out-Null
+                Set-RegistryValueSafe -Path $regPath -Name "AllowIdleIrpInD3" -Value 0 -Stage "Stage8" -Reason "Disable adapter power saving" | Out-Null
             }
 
             # Disable Energy Efficient Ethernet
