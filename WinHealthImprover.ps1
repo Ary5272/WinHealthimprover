@@ -129,7 +129,16 @@ param(
     [switch]$SelfDestruct,
 
     # Automatic mode - no prompts
-    [switch]$Auto
+    [switch]$Auto,
+
+    # Launch interactive wizard (guided mode for beginners)
+    [switch]$Wizard,
+
+    # Launch Quick-Fix preset menu
+    [switch]$QuickFix,
+
+    # Run system analyzer and show recommendations
+    [switch]$Analyze
 )
 
 # ============================================================================
@@ -170,6 +179,10 @@ Import-Module (Join-Path $scriptRoot "modules\Core\Logging.psm1") -Force -Disabl
 Import-Module (Join-Path $scriptRoot "modules\Core\Utils.psm1") -Force -DisableNameChecking
 Import-Module (Join-Path $scriptRoot "modules\Core\Initialize.psm1") -Force -DisableNameChecking
 Import-Module (Join-Path $scriptRoot "modules\Core\Reporting.psm1") -Force -DisableNameChecking
+Import-Module (Join-Path $scriptRoot "modules\Core\SafetyNet.psm1") -Force -DisableNameChecking
+Import-Module (Join-Path $scriptRoot "modules\Core\Wizard.psm1") -Force -DisableNameChecking
+Import-Module (Join-Path $scriptRoot "modules\Core\Analyzer.psm1") -Force -DisableNameChecking
+Import-Module (Join-Path $scriptRoot "modules\Core\QuickFix.psm1") -Force -DisableNameChecking
 
 # Import stage modules
 for ($i = 0; $i -le 10; $i++) {
@@ -219,6 +232,68 @@ if ($ConfigDump) {
     Write-Host "  ─────────────────────────────────────────" -ForegroundColor DarkGray
     Write-Host ""
     exit 0
+}
+
+# ============================================================================
+# INTERACTIVE MODES (Wizard / Quick-Fix / Analyzer)
+# ============================================================================
+
+if ($Wizard) {
+    $wizardConfig = Start-Wizard -LogDirectory $LogDirectory
+    if (-not $wizardConfig) {
+        Write-Host "  Wizard cancelled. Exiting." -ForegroundColor Yellow
+        exit 0
+    }
+    # Apply wizard settings
+    $DryRun = $wizardConfig.DryRun
+    $OnlyStages = $wizardConfig.OnlyStages
+    $OptimizationLevel = $wizardConfig.OptimizationLevel
+    $PrivacyLevel = $wizardConfig.PrivacyLevel
+    $SecurityLevel = $wizardConfig.SecurityLevel
+    $DNSProvider = $wizardConfig.DNSProvider
+    $QuickScan = $wizardConfig.QuickScan
+    $SkipWindowsUpdates = $wizardConfig.SkipWindowsUpdates
+    $KeepOneDrive = $wizardConfig.KeepOneDrive
+    $AggressiveDebloat = $wizardConfig.AggressiveDebloat
+    $SkipChkdsk = $wizardConfig.SkipChkdsk
+    $Auto = $true  # Wizard already confirmed everything
+}
+
+if ($QuickFix) {
+    $presetSelection = Show-QuickFixMenu
+    if (-not $presetSelection) {
+        Write-Host "  Quick-Fix cancelled. Exiting." -ForegroundColor Yellow
+        exit 0
+    }
+    $params = ConvertTo-ScriptParams -PresetSelection $presetSelection
+    $OnlyStages = $params.OnlyStages
+    $DryRun = $params.DryRun
+    $OptimizationLevel = $params.OptimizationLevel
+    $PrivacyLevel = $params.PrivacyLevel
+    $SecurityLevel = $params.SecurityLevel
+    $DNSProvider = $params.DNSProvider
+    $QuickScan = $params.QuickScan
+    $SkipWindowsUpdates = $params.SkipWindowsUpdates
+    $KeepOneDrive = $params.KeepOneDrive
+    $AggressiveDebloat = $params.AggressiveDebloat
+    $SkipChkdsk = $params.SkipChkdsk
+    $Auto = $true
+}
+
+if ($Analyze) {
+    Show-Banner
+    $analysisResult = Invoke-AnalyzerWizard
+    if (-not $analysisResult) {
+        exit 0
+    }
+    Write-Host ""
+    $apply = Read-Host "  Apply recommended fixes? (Y/n)"
+    if ($apply -match "^[Nn]") {
+        Write-Host "  Analysis complete. No changes made." -ForegroundColor Cyan
+        exit 0
+    }
+    $OnlyStages = $analysisResult.RecommendedStages
+    $Auto = $true
 }
 
 # ============================================================================
@@ -279,6 +354,18 @@ $logFile = Initialize-Logging -LogDirectory $LogDirectory
 Write-Log -Message "WinHealthImprover v1.0.0 started" -Level "INFO" -Component "Main"
 Write-Log -Message "Log file: $logFile" -Level "INFO" -Component "Main"
 Write-Log -Message "PowerShell version: $($PSVersionTable.PSVersion)" -Level "INFO" -Component "Main"
+
+# Initialize SafetyNet (change tracking and undo system)
+Initialize-SafetyNet -LogDirectory $LogDirectory
+Write-Log -Message "SafetyNet initialized - all changes are tracked and reversible" -Level "INFO" -Component "Main"
+
+# Run pre-run safety validation
+$safetyCheck = Test-SafeToRun
+Show-SafetyReport -SafetyCheck $safetyCheck
+if (-not $safetyCheck.Safe -and -not $DryRun) {
+    Write-Host "  Safety checks failed. Use -DryRun to preview changes, or fix the issues above." -ForegroundColor Red
+    exit 1
+}
 
 # Pre-flight checks
 Write-Log -Message "Running pre-flight checks..." -Level "INFO" -Component "Main"
@@ -394,6 +481,22 @@ if ($wrapupResult.HealthAfter) {
 Write-Log -Message "WinHealthImprover completed in $($totalTimer.Elapsed.ToString('hh\:mm\:ss'))" -Level "INFO" -Component "Main"
 Write-Host "  WinHealthImprover finished in $($totalTimer.Elapsed.ToString('hh\:mm\:ss'))" -ForegroundColor Cyan
 Write-Host ""
+
+# ============================================================================
+# SAFETYNET SUMMARY
+# ============================================================================
+
+# Show change summary and save journal
+Show-ChangeSummary
+Save-Journal
+Write-Log -Message "SafetyNet journal saved" -Level "INFO" -Component "Main"
+
+# If wizard mode, show friendly completion
+if ($Wizard -or $QuickFix) {
+    Show-WizardComplete -HealthBefore $healthBefore -HealthAfter $wrapupResult.HealthAfter `
+        -ReportPath $wrapupResult.ReportPath `
+        -JournalPath (Get-ChangeSummary).JournalFile
+}
 
 # ============================================================================
 # POST-RUN ACTIONS

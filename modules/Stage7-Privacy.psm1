@@ -134,7 +134,7 @@ function Disable-WindowsTelemetry {
     }
 
     foreach ($setting in $settings) {
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) {
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage7" -Reason "Disable telemetry") {
             $count++
         }
     }
@@ -165,7 +165,7 @@ function Set-DiagnosticDataLevel {
     )
 
     foreach ($setting in $diagSettings) {
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) {
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage7" -Reason "Reduce diagnostic data") {
             $count++
         }
     }
@@ -191,7 +191,7 @@ function Disable-AdvertisingId {
     )
 
     foreach ($setting in $settings) {
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) {
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage7" -Reason "Disable advertising ID") {
             $count++
         }
     }
@@ -218,7 +218,7 @@ function Disable-ActivityHistory {
     )
 
     foreach ($setting in $settings) {
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) {
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage7" -Reason "Disable activity history") {
             $count++
         }
     }
@@ -246,7 +246,7 @@ function Disable-LocationTracking {
 
     foreach ($setting in $settings) {
         $type = if ($setting.ContainsKey("Type")) { $setting.Type } else { "DWord" }
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value -Type $type) {
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Type $type -Stage "Stage7" -Reason "Disable location tracking") {
             $count++
         }
     }
@@ -276,7 +276,7 @@ function Set-AppPermissions {
 
     foreach ($cap in $capabilities) {
         $path = "$basePath\$cap"
-        if (Set-RegistryValue -Path $path -Name "Value" -Value "Deny" -Type "String") {
+        if (Set-RegistryValueSafe -Path $path -Name "Value" -Value "Deny" -Type "String" -Stage "Stage7" -Reason "Restrict $cap permission") {
             $count++
         }
     }
@@ -340,7 +340,13 @@ function Disable-TelemetryServices {
 
     $disabled = 0
     foreach ($svc in $services) {
-        if (Set-ServiceStartupType -ServiceName $svc.Name -StartupType "Disabled") {
+        $result = $false
+        if (Get-Command Set-ServiceStartupTypeSafe -ErrorAction SilentlyContinue) {
+            $result = Set-ServiceStartupTypeSafe -ServiceName $svc.Name -StartupType "Disabled" -Stage "Stage7" -Reason "Disable $($svc.Desc)"
+        } else {
+            $result = Set-ServiceStartupType -ServiceName $svc.Name -StartupType "Disabled"
+        }
+        if ($result) {
             Write-Log -Message "Disabled service: $($svc.Name) ($($svc.Desc))" -Level "SUCCESS" -Component "Stage7"
             $disabled++
         }
@@ -366,7 +372,7 @@ function Disable-FeedbackRequests {
     )
 
     foreach ($setting in $settings) {
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) { $count++ }
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage7" -Reason "Disable feedback") { $count++ }
     }
 
     Write-Log -Message "Feedback requests disabled" -Level "SUCCESS" -Component "Stage7"
@@ -390,7 +396,7 @@ function Disable-WiFiSense {
     )
 
     foreach ($setting in $settings) {
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) { $count++ }
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage7" -Reason "Disable Wi-Fi Sense") { $count++ }
     }
 
     Write-Log -Message "Wi-Fi Sense disabled" -Level "SUCCESS" -Component "Stage7"
@@ -413,7 +419,7 @@ function Disable-CloudClipboard {
     )
 
     foreach ($setting in $settings) {
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) { $count++ }
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage7" -Reason "Disable cloud clipboard") { $count++ }
     }
 
     Write-Log -Message "Cloud clipboard disabled" -Level "SUCCESS" -Component "Stage7"
@@ -441,7 +447,7 @@ function Set-EdgePrivacy {
     )
 
     foreach ($setting in $settings) {
-        if (Set-RegistryValue -Path $setting.Path -Name $setting.Name -Value $setting.Value) { $count++ }
+        if (Set-RegistryValueSafe -Path $setting.Path -Name $setting.Name -Value $setting.Value -Stage "Stage7" -Reason "Harden Edge privacy") { $count++ }
     }
 
     Write-Log -Message "Edge privacy hardened ($count settings)" -Level "SUCCESS" -Component "Stage7"
