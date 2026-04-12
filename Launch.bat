@@ -17,35 +17,39 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
+:: Unblock all PowerShell files (removes "downloaded from internet" warning)
+echo  Preparing files...
+powershell -NoProfile -Command "Get-ChildItem -Path '%~dp0' -Recurse -Include *.ps1,*.psm1 | Unblock-File -ErrorAction SilentlyContinue"
+
 echo.
-echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║           WinHealthImprover - Launch Menu                   ║
-echo  ╠══════════════════════════════════════════════════════════════╣
-echo  ║                                                              ║
-echo  ║   EASY MODE (recommended for most users):                   ║
-echo  ║   [1]  Interactive Wizard (guided step-by-step)             ║
-echo  ║   [2]  Quick-Fix Presets (one-click solutions)              ║
-echo  ║   [3]  System Scan (analyze and recommend)                  ║
-echo  ║                                                              ║
-echo  ║   STANDARD MODE:                                            ║
-echo  ║   [4]  Full Run (all stages)                                ║
-echo  ║   [5]  Dry Run (preview only, no changes)                   ║
-echo  ║   [6]  Quick Run (skip updates + quick scan)                ║
-echo  ║                                                              ║
-echo  ║   TARGETED MODE:                                            ║
-echo  ║   [7]  Cleanup Only (temp files + bloatware)                ║
-echo  ║   [8]  Repair Only (fix broken Windows)                     ║
-echo  ║   [9]  Optimize Only (speed up PC)                          ║
-echo  ║   [A]  Privacy Harden (stop tracking)                       ║
-echo  ║   [B]  Security Harden (protect from attacks)               ║
-echo  ║                                                              ║
-echo  ║   OTHER:                                                    ║
-echo  ║   [C]  Launch GUI                                           ║
-echo  ║   [D]  Undo All Changes (rollback)                         ║
-echo  ║   [E]  Custom (enter parameters manually)                   ║
-echo  ║   [0]  Exit                                                  ║
-echo  ║                                                              ║
-echo  ╚══════════════════════════════════════════════════════════════╝
+echo  +==============================================================+
+echo  ^|           WinHealthImprover - Launch Menu                    ^|
+echo  +==============================================================+
+echo  ^|                                                              ^|
+echo  ^|   EASY MODE (recommended for most users):                   ^|
+echo  ^|   [1]  Interactive Wizard (guided step-by-step)             ^|
+echo  ^|   [2]  Quick-Fix Presets (one-click solutions)              ^|
+echo  ^|   [3]  System Scan (analyze and recommend)                  ^|
+echo  ^|                                                              ^|
+echo  ^|   STANDARD MODE:                                            ^|
+echo  ^|   [4]  Full Run (all stages)                                ^|
+echo  ^|   [5]  Dry Run (preview only, no changes)                   ^|
+echo  ^|   [6]  Quick Run (skip updates + quick scan)                ^|
+echo  ^|                                                              ^|
+echo  ^|   TARGETED MODE:                                            ^|
+echo  ^|   [7]  Cleanup Only (temp files + bloatware)                ^|
+echo  ^|   [8]  Repair Only (fix broken Windows)                     ^|
+echo  ^|   [9]  Optimize Only (speed up PC)                          ^|
+echo  ^|   [A]  Privacy Harden (stop tracking)                       ^|
+echo  ^|   [B]  Security Harden (protect from attacks)               ^|
+echo  ^|                                                              ^|
+echo  ^|   OTHER:                                                    ^|
+echo  ^|   [C]  Launch GUI                                           ^|
+echo  ^|   [D]  Undo All Changes (rollback)                         ^|
+echo  ^|   [E]  Custom (enter parameters manually)                   ^|
+echo  ^|   [0]  Exit                                                  ^|
+echo  ^|                                                              ^|
+echo  +==============================================================+
 echo.
 echo   All changes are tracked and can be reversed with option [D]!
 echo.
@@ -143,10 +147,10 @@ goto done
 
 :done
 echo.
-echo  ════════════════════════════════════════════════════════════════
+echo  ================================================================
 echo   WinHealthImprover has finished. A reboot is recommended.
 echo   Run option [D] to undo any changes if needed.
-echo  ════════════════════════════════════════════════════════════════
+echo  ================================================================
 echo.
 pause
 

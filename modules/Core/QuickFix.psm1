@@ -176,10 +176,10 @@ function Show-QuickFixMenu {
     $presetOrder = @("FixMyPC", "SpeedUp", "PrivacyLock", "CleanSweep", "SecurityMax", "FreshStart", "Maintenance")
 
     Write-Host ""
-    Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "  ║              Quick-Fix Presets                               ║" -ForegroundColor Cyan
-    Write-Host "  ║   Pick a preset and we'll handle the rest!                  ║" -ForegroundColor Cyan
-    Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host "  +==============================================================+" -ForegroundColor Cyan
+    Write-Host "  |              Quick-Fix Presets                               |" -ForegroundColor Cyan
+    Write-Host "  |   Pick a preset and we'll handle the rest!                  |" -ForegroundColor Cyan
+    Write-Host "  +==============================================================+" -ForegroundColor Cyan
     Write-Host ""
 
     $index = 1
@@ -227,10 +227,10 @@ function Show-QuickFixMenu {
     Write-Host "  Estimated time: ~$($selected.EstMinutes) minutes" -ForegroundColor DarkCyan
     Write-Host ""
 
-    Write-Host "  ┌─────────────────────────────────────────────────────────┐" -ForegroundColor Green
-    Write-Host "  │  All changes are tracked and reversible!                │" -ForegroundColor Green
-    Write-Host "  │  Run .\Undo-Changes.ps1 to reverse everything.          │" -ForegroundColor Green
-    Write-Host "  └─────────────────────────────────────────────────────────┘" -ForegroundColor Green
+    Write-Host "  +---------------------------------------------------------+" -ForegroundColor Green
+    Write-Host "  |  All changes are tracked and reversible!                |" -ForegroundColor Green
+    Write-Host "  |  Run .\Undo-Changes.ps1 to reverse everything.          |" -ForegroundColor Green
+    Write-Host "  +---------------------------------------------------------+" -ForegroundColor Green
     Write-Host ""
 
     do {

@@ -68,9 +68,9 @@ function Find-LatestJournal {
 Clear-Host
 
 Write-Host ""
-Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "  ║           WinHealthImprover - Undo Changes                  ║" -ForegroundColor Cyan
-Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "  +==============================================================+" -ForegroundColor Cyan
+Write-Host "  |           WinHealthImprover - Undo Changes                  |" -ForegroundColor Cyan
+Write-Host "  +==============================================================+" -ForegroundColor Cyan
 Write-Host ""
 
 # Find the journal file
@@ -116,7 +116,7 @@ $fileCount = @($journal.Files).Count
 $totalChanges = $journal.TotalChanges
 
 Write-Host "  Changes recorded in this journal:" -ForegroundColor White
-Write-Host "  ─────────────────────────────────────────────" -ForegroundColor DarkGray
+Write-Host "  ---------------------------------------------" -ForegroundColor DarkGray
 Write-Host "    Registry values changed:  $regCount" -ForegroundColor DarkCyan
 Write-Host "    Services modified:         $svcCount" -ForegroundColor DarkCyan
 Write-Host "    Files affected:            $fileCount" -ForegroundColor DarkCyan
@@ -180,7 +180,7 @@ if (-not $WhatIf) {
 
 Write-Host ""
 Write-Host "  Rolling back changes..." -ForegroundColor Cyan
-Write-Host "  ─────────────────────────────────────────────" -ForegroundColor DarkGray
+Write-Host "  ---------------------------------------------" -ForegroundColor DarkGray
 
 $undone = 0
 $failed = 0
@@ -307,7 +307,7 @@ if ($journal.Files) {
 # ============================================================================
 
 Write-Host ""
-Write-Host "  ─────────────────────────────────────────────" -ForegroundColor DarkGray
+Write-Host "  ---------------------------------------------" -ForegroundColor DarkGray
 
 if ($WhatIf) {
     Write-Host "  PREVIEW: $undone changes would be reversed." -ForegroundColor Cyan

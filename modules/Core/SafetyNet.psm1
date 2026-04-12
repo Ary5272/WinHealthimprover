@@ -322,9 +322,9 @@ function Undo-AllChanges {
     )
 
     Write-Host ""
-    Write-Host "  ╔══════════════════════════════════════════════════════════╗" -ForegroundColor Red
-    Write-Host "  ║              ROLLING BACK ALL CHANGES                    ║" -ForegroundColor Red
-    Write-Host "  ╚══════════════════════════════════════════════════════════╝" -ForegroundColor Red
+    Write-Host "  +=========================================================+" -ForegroundColor Red
+    Write-Host "  |              ROLLING BACK ALL CHANGES                    |" -ForegroundColor Red
+    Write-Host "  +=========================================================+" -ForegroundColor Red
     Write-Host ""
 
     $journal = $null
@@ -643,18 +643,18 @@ function Show-ChangeSummary {
     $summary = Get-ChangeSummary
 
     Write-Host ""
-    Write-Host "  ┌─────────────────────────────────────────────────────────┐" -ForegroundColor DarkGray
-    Write-Host "  │              SAFETYNET CHANGE SUMMARY                   │" -ForegroundColor DarkGray
-    Write-Host "  ├─────────────────────────────────────────────────────────┤" -ForegroundColor DarkGray
-    Write-Host "  │  Registry values changed:  $($summary.RegistryChanges.ToString().PadRight(30))│" -ForegroundColor White
-    Write-Host "  │  Services modified:         $($summary.ServiceChanges.ToString().PadRight(30))│" -ForegroundColor White
-    Write-Host "  │  Files affected:            $($summary.FileChanges.ToString().PadRight(30))│" -ForegroundColor White
-    Write-Host "  │  Total tracked changes:     $($summary.TotalChanges.ToString().PadRight(30))│" -ForegroundColor White
-    Write-Host "  │                                                         │" -ForegroundColor DarkGray
-    Write-Host "  │  All changes are reversible! Run:                       │" -ForegroundColor Green
-    Write-Host "  │  .\Undo-Changes.ps1                                     │" -ForegroundColor Green
-    Write-Host "  │  to reverse everything.                                 │" -ForegroundColor Green
-    Write-Host "  └─────────────────────────────────────────────────────────┘" -ForegroundColor DarkGray
+    Write-Host "  +---------------------------------------------------------+" -ForegroundColor DarkGray
+    Write-Host "  |              SAFETYNET CHANGE SUMMARY                   |" -ForegroundColor DarkGray
+    Write-Host "  +---------------------------------------------------------+" -ForegroundColor DarkGray
+    Write-Host "  |  Registry values changed:  $($summary.RegistryChanges.ToString().PadRight(30))|" -ForegroundColor White
+    Write-Host "  |  Services modified:         $($summary.ServiceChanges.ToString().PadRight(30))|" -ForegroundColor White
+    Write-Host "  |  Files affected:            $($summary.FileChanges.ToString().PadRight(30))|" -ForegroundColor White
+    Write-Host "  |  Total tracked changes:     $($summary.TotalChanges.ToString().PadRight(30))|" -ForegroundColor White
+    Write-Host "  |                                                         |" -ForegroundColor DarkGray
+    Write-Host "  |  All changes are reversible! Run:                       |" -ForegroundColor Green
+    Write-Host "  |  .\Undo-Changes.ps1                                     |" -ForegroundColor Green
+    Write-Host "  |  to reverse everything.                                 |" -ForegroundColor Green
+    Write-Host "  +---------------------------------------------------------+" -ForegroundColor DarkGray
     Write-Host ""
 
     # Auto-save journal
