@@ -59,16 +59,16 @@ function Start-Wizard {
 
 function Show-WizardBanner {
     Write-Host ""
-    Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "  ║                                                              ║" -ForegroundColor Cyan
-    Write-Host "  ║          Welcome to WinHealthImprover!                       ║" -ForegroundColor Cyan
-    Write-Host "  ║                                                              ║" -ForegroundColor Cyan
-    Write-Host "  ║   This wizard will guide you step-by-step through fixing     ║" -ForegroundColor Cyan
-    Write-Host "  ║   and optimizing your PC. No technical knowledge needed!     ║" -ForegroundColor Cyan
-    Write-Host "  ║                                                              ║" -ForegroundColor Cyan
-    Write-Host "  ║   Every change can be undone with one click.                 ║" -ForegroundColor Green
-    Write-Host "  ║                                                              ║" -ForegroundColor Cyan
-    Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host "  +==============================================================+" -ForegroundColor Cyan
+    Write-Host "  |                                                              |" -ForegroundColor Cyan
+    Write-Host "  |          Welcome to WinHealthImprover!                       |" -ForegroundColor Cyan
+    Write-Host "  |                                                              |" -ForegroundColor Cyan
+    Write-Host "  |   This wizard will guide you step-by-step through fixing     |" -ForegroundColor Cyan
+    Write-Host "  |   and optimizing your PC. No technical knowledge needed!     |" -ForegroundColor Cyan
+    Write-Host "  |                                                              |" -ForegroundColor Cyan
+    Write-Host "  |   Every change can be undone with one click.                 |" -ForegroundColor Green
+    Write-Host "  |                                                              |" -ForegroundColor Cyan
+    Write-Host "  +==============================================================+" -ForegroundColor Cyan
     Write-Host ""
 }
 
@@ -90,7 +90,7 @@ function Read-WizardChoice {
 
     Write-Host ""
     Write-Host "  $Prompt" -ForegroundColor White
-    Write-Host "  ─────────────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "  -------------------------------------------------" -ForegroundColor DarkGray
     for ($i = 0; $i -lt $Options.Count; $i++) {
         $marker = if ($i + 1 -eq $Default) { " (recommended)" } else { "" }
         Write-Host "    [$($i + 1)] $($Options[$i])$marker" -ForegroundColor Yellow
@@ -134,7 +134,7 @@ function Read-WizardYesNo {
 
 function Show-WizardStep-Safety {
     Write-Host "  STEP 1 of 5: Safety Check" -ForegroundColor Cyan
-    Write-Host "  ═══════════════════════════" -ForegroundColor Cyan
+    Write-Host "  ===========================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Before we start, let's make sure your PC is ready..." -ForegroundColor White
     Write-Host ""

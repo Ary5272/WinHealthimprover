@@ -79,24 +79,24 @@ function Show-SystemSummary {
     )
 
     Write-Host ""
-    Write-Host "  ┌─────────────────────────────────────────────────────────┐" -ForegroundColor DarkGray
-    Write-Host "  │              SYSTEM INFORMATION                         │" -ForegroundColor DarkGray
-    Write-Host "  ├─────────────────────────────────────────────────────────┤" -ForegroundColor DarkGray
-    Write-Host "  │  Computer:  $($SystemInfo.ComputerName.PadRight(43))│" -ForegroundColor White
-    Write-Host "  │  OS:        $($SystemInfo.OS.VersionName.PadRight(43))│" -ForegroundColor White
-    Write-Host "  │  Build:     $("$($SystemInfo.OS.Build) ($($SystemInfo.OS.Arch))".PadRight(43))│" -ForegroundColor White
-    Write-Host "  │  CPU:       $($SystemInfo.CPU.Substring(0, [Math]::Min(43, $SystemInfo.CPU.Length)).PadRight(43))│" -ForegroundColor White
-    Write-Host "  │  RAM:       $("$($SystemInfo.TotalRAM) GB ($($SystemInfo.FreeRAM) GB free)".PadRight(43))│" -ForegroundColor White
+    Write-Host "  +-----------------------------------------------------------+" -ForegroundColor DarkGray
+    Write-Host "  |              SYSTEM INFORMATION                         |" -ForegroundColor DarkGray
+    Write-Host "  +-----------------------------------------------------------+" -ForegroundColor DarkGray
+    Write-Host "  |  Computer:  $($SystemInfo.ComputerName.PadRight(43))|" -ForegroundColor White
+    Write-Host "  |  OS:        $($SystemInfo.OS.VersionName.PadRight(43))|" -ForegroundColor White
+    Write-Host "  |  Build:     $("$($SystemInfo.OS.Build) ($($SystemInfo.OS.Arch))".PadRight(43))|" -ForegroundColor White
+    Write-Host "  |  CPU:       $($SystemInfo.CPU.Substring(0, [Math]::Min(43, $SystemInfo.CPU.Length)).PadRight(43))|" -ForegroundColor White
+    Write-Host "  |  RAM:       $("$($SystemInfo.TotalRAM) GB ($($SystemInfo.FreeRAM) GB free)".PadRight(43))|" -ForegroundColor White
 
     foreach ($disk in $SystemInfo.Disks) {
         $diskStr = "$($disk.Drive) $($disk.Free) GB free of $($disk.Size) GB ($($disk.UsedPct)% used)"
-        Write-Host "  │  Disk:      $($diskStr.Substring(0, [Math]::Min(43, $diskStr.Length)).PadRight(43))│" -ForegroundColor White
+        Write-Host "  |  Disk:      $($diskStr.Substring(0, [Math]::Min(43, $diskStr.Length)).PadRight(43))|" -ForegroundColor White
     }
 
-    Write-Host "  │  Power:     $($Prerequisites.PowerSource.PadRight(43))│" -ForegroundColor White
-    Write-Host "  │  Internet:  $(if ($Prerequisites.HasInternet) { 'Connected'.PadRight(43) } else { 'Disconnected'.PadRight(43) })│" -ForegroundColor $(if ($Prerequisites.HasInternet) { 'Green' } else { 'Yellow' })
-    Write-Host "  │  Safe Mode: $(if ($Prerequisites.IsSafeMode) { 'Yes'.PadRight(43) } else { 'No'.PadRight(43) })│" -ForegroundColor White
-    Write-Host "  └─────────────────────────────────────────────────────────┘" -ForegroundColor DarkGray
+    Write-Host "  |  Power:     $($Prerequisites.PowerSource.PadRight(43))|" -ForegroundColor White
+    Write-Host "  |  Internet:  $(if ($Prerequisites.HasInternet) { 'Connected'.PadRight(43) } else { 'Disconnected'.PadRight(43) })|" -ForegroundColor $(if ($Prerequisites.HasInternet) { 'Green' } else { 'Yellow' })
+    Write-Host "  |  Safe Mode: $(if ($Prerequisites.IsSafeMode) { 'Yes'.PadRight(43) } else { 'No'.PadRight(43) })|" -ForegroundColor White
+    Write-Host "  +-----------------------------------------------------------+" -ForegroundColor DarkGray
     Write-Host ""
 }
 
@@ -204,26 +204,26 @@ function Show-HealthScore {
     }
 
     Write-Host ""
-    Write-Host "  ┌─────────────────────────────────────────────────────────┐" -ForegroundColor DarkGray
-    Write-Host "  │              SYSTEM HEALTH SCORE                        │" -ForegroundColor DarkGray
-    Write-Host "  ├─────────────────────────────────────────────────────────┤" -ForegroundColor DarkGray
-    Write-Host "  │                                                         │" -ForegroundColor DarkGray
-    Write-Host "  │         Score: $($Health.Score.ToString().PadRight(5)) Grade: $($Health.Grade)                          │" -ForegroundColor $color
-    Write-Host "  │                                                         │" -ForegroundColor DarkGray
+    Write-Host "  +-----------------------------------------------------------+" -ForegroundColor DarkGray
+    Write-Host "  |              SYSTEM HEALTH SCORE                        |" -ForegroundColor DarkGray
+    Write-Host "  +-----------------------------------------------------------+" -ForegroundColor DarkGray
+    Write-Host "  |                                                         |" -ForegroundColor DarkGray
+    Write-Host "  |         Score: $($Health.Score.ToString().PadRight(5)) Grade: $($Health.Grade)                          |" -ForegroundColor $color
+    Write-Host "  |                                                         |" -ForegroundColor DarkGray
 
     if ($Health.Deductions.Count -gt 0) {
-        Write-Host "  │  Issues Found:                                          │" -ForegroundColor DarkGray
+        Write-Host "  |  Issues Found:                                          |" -ForegroundColor DarkGray
         foreach ($issue in $Health.Deductions) {
             $truncated = $issue.Substring(0, [Math]::Min(51, $issue.Length))
-            Write-Host "  │    - $($truncated.PadRight(51))│" -ForegroundColor Yellow
+            Write-Host "  |    - $($truncated.PadRight(51))|" -ForegroundColor Yellow
         }
     }
     else {
-        Write-Host "  │  No significant issues detected!                       │" -ForegroundColor Green
+        Write-Host "  |  No significant issues detected!                       |" -ForegroundColor Green
     }
 
-    Write-Host "  │                                                         │" -ForegroundColor DarkGray
-    Write-Host "  └─────────────────────────────────────────────────────────┘" -ForegroundColor DarkGray
+    Write-Host "  |                                                         |" -ForegroundColor DarkGray
+    Write-Host "  +-----------------------------------------------------------+" -ForegroundColor DarkGray
     Write-Host ""
 }
 

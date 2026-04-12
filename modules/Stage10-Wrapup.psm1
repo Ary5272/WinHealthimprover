@@ -178,7 +178,7 @@ function Invoke-Stage10 {
     if ($stageResults.Count -gt 0) {
         Write-Host ""
         Write-Host "  Stage Results:" -ForegroundColor White
-        Write-Host "  ─────────────────────────────────────────────────────" -ForegroundColor DarkGray
+        Write-Host "  ---------------------------------------------------------" -ForegroundColor DarkGray
 
         foreach ($result in $stageResults) {
             $icon = switch ($result.Status) {
@@ -202,7 +202,7 @@ function Invoke-Stage10 {
     $metrics = Get-Metrics
     Write-Host ""
     Write-Host "  Key Metrics:" -ForegroundColor White
-    Write-Host "  ─────────────────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "  ---------------------------------------------------------" -ForegroundColor DarkGray
 
     foreach ($category in $metrics.Keys) {
         foreach ($key in $metrics[$category].Keys) {
@@ -254,15 +254,15 @@ function Show-BeforeAfterComparison {
     $changeSymbol = if ($change -gt 0) { "+" } elseif ($change -lt 0) { "" } else { "" }
     $changeColor = if ($change -gt 0) { "Green" } elseif ($change -lt 0) { "Red" } else { "Yellow" }
 
-    Write-Host "  ┌───────────────────────────────────────────────────────┐" -ForegroundColor DarkGray
-    Write-Host "  │            HEALTH SCORE COMPARISON                    │" -ForegroundColor DarkGray
-    Write-Host "  ├───────────────────────────────────────────────────────┤" -ForegroundColor DarkGray
-    Write-Host "  │                                                       │" -ForegroundColor DarkGray
-    Write-Host "  │   BEFORE:  $("$($Before.Score)/100 (Grade: $($Before.Grade))".PadRight(40))│" -ForegroundColor Yellow
-    Write-Host "  │   AFTER:   $("$($After.Score)/100 (Grade: $($After.Grade))".PadRight(40))│" -ForegroundColor Green
-    Write-Host "  │   CHANGE:  $("$changeSymbol$change points".PadRight(40))│" -ForegroundColor $changeColor
-    Write-Host "  │                                                       │" -ForegroundColor DarkGray
-    Write-Host "  └───────────────────────────────────────────────────────┘" -ForegroundColor DarkGray
+    Write-Host "  +-------------------------------------------------------+" -ForegroundColor DarkGray
+    Write-Host "  |            HEALTH SCORE COMPARISON                    |" -ForegroundColor DarkGray
+    Write-Host "  +-------------------------------------------------------+" -ForegroundColor DarkGray
+    Write-Host "  |                                                       |" -ForegroundColor DarkGray
+    Write-Host "  |   BEFORE:  $("$($Before.Score)/100 (Grade: $($Before.Grade))".PadRight(40))|" -ForegroundColor Yellow
+    Write-Host "  |   AFTER:   $("$($After.Score)/100 (Grade: $($After.Grade))".PadRight(40))|" -ForegroundColor Green
+    Write-Host "  |   CHANGE:  $("$changeSymbol$change points".PadRight(40))|" -ForegroundColor $changeColor
+    Write-Host "  |                                                       |" -ForegroundColor DarkGray
+    Write-Host "  +-------------------------------------------------------+" -ForegroundColor DarkGray
 }
 
 Export-ModuleMember -Function Invoke-Stage10
