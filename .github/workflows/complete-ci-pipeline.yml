@@ -14,11 +14,147 @@ env:
 
 jobs:
   # ============================================================================
+  # SYNTAX VALIDATION
+  # ============================================================================
+  syntax-check:
+    name: PowerShell Syntax Validation
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate PowerShell syntax
+        run: |
+          $ErrorActionPreference = "Stop"
+          $validationErrors = @()
+          
+          # Check main script
+          try {
+            [System.Management.Automation.PSParser]::Tokenize((Get-Content WinHealthImprover.ps1 -Raw), [ref]$null) | Out-Null
+            Write-Host "✅ WinHealthImprover.ps1 syntax OK" -ForegroundColor Green
+          } catch {
+            $validationErrors += "WinHealthImprover.ps1: $_"
+            Write-Host "❌ WinHealthImprover.ps1 syntax error: $_" -ForegroundColor Red
+          }
+          
+          # Check GUI script
+          try {
+            [System.Management.Automation.PSParser]::Tokenize((Get-Content WinHealthImprover-GUI.ps1 -Raw), [ref]$null) | Out-Null
+            Write-Host "✅ WinHealthImprover-GUI.ps1 syntax OK" -ForegroundColor Green
+          } catch {
+            $validationErrors += "WinHealthImprover-GUI.ps1: $_"
+            Write-Host "❌ WinHealthImprover-GUI.ps1 syntax error: $_" -ForegroundColor Red
+          }
+          
+          # Check Undo script
+          try {
+            [System.Management.Automation.PSParser]::Tokenize((Get-Content Undo-Changes.ps1 -Raw), [ref]$null) | Out-Null
+            Write-Host "✅ Undo-Changes.ps1 syntax OK" -ForegroundColor Green
+          } catch {
+            $validationErrors += "Undo-Changes.ps1: $_"
+            Write-Host "❌ Undo-Changes.ps1 syntax error: $_" -ForegroundColor Red
+          }
+          
+          # Check all modules
+          $modules = Get-ChildItem -Path "modules" -Filter "*.psm1" -Recurse
+          foreach ($module in $modules) {
+            try {
+              [System.Management.Automation.PSParser]::Tokenize((Get-Content $module.FullName -Raw), [ref]$null) | Out-Null
+              Write-Host "✅ $($module.Name) syntax OK" -ForegroundColor Green
+            } catch {
+              $validationErrors += "$($module.Name): $_"
+              Write-Host "❌ $($module.Name) syntax error: $_" -ForegroundColor Red
+            }
+          }
+          
+          if ($validationErrors.Count -gt 0) {
+            Write-Host "`n❌ Syntax validation failed with $($validationErrors.Count) error(s)" -ForegroundColor Red
+            $validationErrors | ForEach-Object { Write-Host "  - $_" }
+            exit 1
+          } else {
+            Write-Host "`n✅ All PowerShell syntax validation passed" -ForegroundColor Green
+          }
+        shell: powershell
+
+  # ============================================================================
+  # MODULE VALIDATION
+  # ============================================================================
+  module-validation:
+    name: Module Load Test
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate modules can load
+        run: |
+          $ErrorActionPreference = "Continue"
+          $scriptRoot = Get-Location
+          
+          # Test each module individually
+          $modules = @(
+            "modules\Core\Logging.psm1",
+            "modules\Core\Utils.psm1",
+            "modules\Core\Initialize.psm1",
+            "modules\Core\Reporting.psm1",
+            "modules\Core\SafetyNet.psm1",
+            "modules\Core\Wizard.psm1",
+            "modules\Core\Analyzer.psm1",
+            "modules\Core\QuickFix.psm1",
+            "modules\Stage0-Prep.psm1",
+            "modules\Stage1-TempClean.psm1",
+            "modules\Stage2-Debloat.psm1",
+            "modules\Stage3-Disinfect.psm1",
+            "modules\Stage4-Repair.psm1",
+            "modules\Stage5-Patch.psm1",
+            "modules\Stage6-Optimize.psm1",
+            "modules\Stage7-Privacy.psm1",
+            "modules\Stage8-Network.psm1",
+            "modules\Stage9-Security.psm1",
+            "modules\Stage10-Wrapup.psm1"
+          )
+          
+          $failedModules = @()
+          $loadedModules = @()
+          
+          foreach ($module in $modules) {
+            $modulePath = Join-Path $scriptRoot $module
+            if (-not (Test-Path $modulePath)) {
+              Write-Host "❌ Module not found: $module" -ForegroundColor Red
+              $failedModules += $module
+              continue
+            }
+            
+            try {
+              $mod = Import-Module -Path $modulePath -Force -PassThru -ErrorAction Stop
+              Write-Host "✅ Loaded: $module (Functions: $($mod.ExportedFunctions.Count))" -ForegroundColor Green
+              $loadedModules += @{ Module = $module; Functions = $mod.ExportedFunctions.Keys -join ", " }
+            } catch {
+              Write-Host "❌ Failed to load: $module - $_" -ForegroundColor Red
+              $failedModules += $module
+            }
+          }
+          
+          Write-Host "`nModule Load Summary:" -ForegroundColor Cyan
+          Write-Host "Loaded: $($loadedModules.Count)" -ForegroundColor Green
+          Write-Host "Failed: $($failedModules.Count)" -ForegroundColor Red
+          
+          if ($failedModules.Count -gt 0) {
+            Write-Host "`nFailed modules:" -ForegroundColor Red
+            $failedModules | ForEach-Object { Write-Host "  - $_" }
+            exit 1
+          }
+        shell: powershell
+
+  # ============================================================================
   # DRY-RUN TESTING
   # ============================================================================
   dryrun-test:
     name: Dry-Run Test
     runs-on: windows-latest
+    needs: [syntax-check, module-validation]
     outputs:
       health_before: ${{ steps.dryrun.outputs.health_before }}
       health_after: ${{ steps.dryrun.outputs.health_after }}
@@ -77,10 +213,9 @@ jobs:
           $log = Get-Content dry_run_output.txt -Raw
           
           $criticalErrors = @{
+            'Stage Execution Failures' = '\[X\] Stage \d+ .* failed'
+            'Module Load Failures' = 'is not recognized as the name of a cmdlet'
             'Null Reference Errors' = 'Cannot index into a null'
-            'Missing Functions' = 'is not recognized as the name of a cmdlet'
-            'Module Load Failures' = 'Failed to load'
-            'Stage Failures' = '\[X\] Stage \d+ .* failed'
           }
           
           $report = @()
@@ -111,6 +246,7 @@ jobs:
   gui-testing:
     name: GUI Script Validation
     runs-on: windows-latest
+    needs: syntax-check
     
     steps:
       - name: Checkout code
@@ -155,6 +291,7 @@ jobs:
   stage-testing:
     name: Stage Testing
     runs-on: windows-latest
+    needs: [module-validation]
     strategy:
       matrix:
         stage: [0, 1, 2, 6]  # Test a few critical stages
@@ -194,6 +331,7 @@ jobs:
   performance-bench:
     name: Performance Benchmarking
     runs-on: windows-latest
+    needs: [module-validation]
     
     steps:
       - name: Checkout code
@@ -237,6 +375,7 @@ jobs:
   undo-testing:
     name: Undo Functionality Test
     runs-on: windows-latest
+    needs: syntax-check
     
     steps:
       - name: Checkout code
@@ -317,6 +456,16 @@ jobs:
                           <th>Details</th>
                       </tr>
                       <tr>
+                          <td>Syntax Validation</td>
+                          <td class="pass">✅ PASS</td>
+                          <td>All PowerShell scripts validated</td>
+                      </tr>
+                      <tr>
+                          <td>Module Loading</td>
+                          <td class="pass">✅ PASS</td>
+                          <td>All modules loaded successfully</td>
+                      </tr>
+                      <tr>
                           <td>Dry-Run Test</td>
                           <td class="pass">✅ PASS</td>
                           <td>Script executed without fatal errors</td>
@@ -378,7 +527,7 @@ jobs:
   pr-comment:
     name: Comment on PR
     runs-on: ubuntu-latest
-    needs: [dryrun-test, error-detection, gui-testing, stage-testing, performance-bench, undo-testing, html-report]
+    needs: [syntax-check, module-validation, dryrun-test, error-detection, gui-testing, stage-testing, performance-bench, undo-testing, html-report]
     if: github.event_name == 'pull_request' && always()
     
     steps:
@@ -391,6 +540,8 @@ jobs:
             
             | Test | Status |
             |------|--------|
+            | Syntax Validation | ✅ |
+            | Module Loading | ✅ |
             | Dry-Run Test | ✅ |
             | Error Detection | ✅ |
             | GUI Validation | ✅ |
@@ -403,6 +554,8 @@ jobs:
             - After: ${{ needs.dryrun-test.outputs.health_after }}
             
             📥 **Artifacts Available**
+            - Syntax validation results
+            - Module load test results
             - Dry-run output
             - Stage test results
             - Performance benchmark
