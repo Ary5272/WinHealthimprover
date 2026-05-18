@@ -83,6 +83,7 @@ jobs:
   module-validation:
     name: Module Load Test
     runs-on: windows-latest
+    needs: syntax-check
     
     steps:
       - name: Checkout code
@@ -128,8 +129,9 @@ jobs:
             }
             
             try {
-              $mod = Import-Module -Path $modulePath -Force -PassThru -ErrorAction Stop
-              Write-Host "✅ Loaded: $module (Functions: $($mod.ExportedFunctions.Count))" -ForegroundColor Green
+              $mod = Import-Module $modulePath -Force -PassThru -ErrorAction Stop
+              $functionCount = $mod.ExportedFunctions.Count
+              Write-Host "✅ Loaded: $module (Functions: $functionCount)" -ForegroundColor Green
               $loadedModules += @{ Module = $module; Functions = $mod.ExportedFunctions.Keys -join ", " }
             } catch {
               Write-Host "❌ Failed to load: $module - $_" -ForegroundColor Red
